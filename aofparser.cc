@@ -61,16 +61,6 @@ void GetLine(std::ifstream &aof, std::string &line /* OUT */)
     }
 }
 
-void GetBulk(std::ifstream &aof, std::string &line /* OUT */, size_t N) {
-    // Cannot readLine because of userdata may have \r\n .
-    line.resize(N + strlen("\r\n"));
-    aof.read(&line[0], line.size());
-    assert(line[line.size()-1] == '\n');
-    assert(line[line.size()-2] == '\r');
-    line.pop_back();    // pop \n
-    line.pop_back();    // pop \r
-}
-
 int ParseArrayLen(const std::string &line)
 {
     assert(line[0] == '*');
@@ -81,6 +71,16 @@ int ParseBulkLen(const std::string &line)
 {
     assert(line[0] == '$');
     return ToInt(line, 1, line.length());
+}
+
+void ParseBuck(std::ifstream &aof, std::string &line /* OUT */, size_t N) {
+    // Cannot readLine because of userdata may have \r\n .
+    line.resize(N + strlen("\r\n"));
+    aof.read(&line[0], line.size());
+    assert(line[line.size()-1] == '\n');
+    assert(line[line.size()-2] == '\r');
+    line.pop_back();    // pop \n
+    line.pop_back();    // pop \r
 }
 
 std::string ParseSingleline(const std::string &line)
@@ -130,7 +130,7 @@ std::string ParseOneMsg(std::ifstream &aof)
     {
         /* bulk strings */
         int bulklen = ParseBulkLen(line);
-        GetBulk(aof, line, bulklen);
+        ParseBuck(aof, line, bulklen);
         assert(bulklen == line.size());
         retval += line;
         break;
