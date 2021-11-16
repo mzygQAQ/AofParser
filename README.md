@@ -29,3 +29,4 @@ redis的AOF文件本质是1个按照RESP协议组织的文本文件，直接打�
 
 
 ##### 截图
+![https://github.com/guoxiangCN/AofParser/blob/main/example.PNG]
