@@ -61,6 +61,16 @@ void GetLine(std::ifstream &aof, std::string &line /* OUT */)
     }
 }
 
+void GetBulk(std::ifstream &aof, std::string &line /* OUT */, size_t N) {
+    // Cannot readLine because of userdata may have \r\n .
+    line.resize(N + strlen("\r\n"));
+    aof.read(&line[0], line.size());
+    assert(line[line.size()-1] == '\n');
+    assert(line[line.size()-2] == '\r');
+    line.pop_back();    // pop \n
+    line.pop_back();    // pop \r
+}
+
 int ParseArrayLen(const std::string &line)
 {
     assert(line[0] == '*');
@@ -120,11 +130,8 @@ std::string ParseOneMsg(std::ifstream &aof)
     {
         /* bulk strings */
         int bulklen = ParseBulkLen(line);
-
-		/* BUG: fixme bulk should be binary safe, if user data has CRLF */
-        GetLine(aof, line);
-        assert(aof.good());
-        assert(line.size() == bulklen);
+        GetBulk(aof, line, bulklen);
+        assert(bulklen == line.size());
         retval += line;
         break;
     }
