@@ -120,6 +120,8 @@ std::string ParseOneMsg(std::ifstream &aof)
     {
         /* bulk strings */
         int bulklen = ParseBulkLen(line);
+
+		/* BUG: fixme bulk should be binary safe, if user data has CRLF */
         GetLine(aof, line);
         assert(aof.good());
         assert(line.size() == bulklen);
