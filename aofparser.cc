@@ -73,14 +73,15 @@ int ParseBulkLen(const std::string &line)
     return ToInt(line, 1, line.length());
 }
 
-void ParseBuck(std::ifstream &aof, std::string &line /* OUT */, size_t N) {
+void ParseBuck(std::ifstream &aof, std::string &line /* OUT */, size_t N)
+{
     // Cannot readLine because of userdata may have \r\n .
     line.resize(N + strlen("\r\n"));
     aof.read(&line[0], line.size());
-    assert(line[line.size()-1] == '\n');
-    assert(line[line.size()-2] == '\r');
-    line.pop_back();    // pop \n
-    line.pop_back();    // pop \r
+    assert(line[line.size() - 1] == '\n');
+    assert(line[line.size() - 2] == '\r');
+    line.pop_back(); // pop \n
+    line.pop_back(); // pop \r
 }
 
 std::string ParseSingleline(const std::string &line)
@@ -164,7 +165,7 @@ int main(int argc, char **argv)
         FATAL("Failed to open aof file givend.");
     }
 
-    // Check if a directory
+    // Check
 #ifdef __GNUC__
     struct stat st;
     stat(argv[1], &st);
@@ -172,13 +173,30 @@ int main(int argc, char **argv)
     {
         FATAL("Expected a aof file, but a directory was given!");
     }
+
+    // 普通aof要么是空的要么不会低于5字节
+    // aof混合版至少不会低于5直接 "REDIS"
+    if (st.st_size > 0 && st.st_size < 5)
+    {
+        FATAL("Invalid aof file format!");
+    }
 #endif
+
+    // check aof_use_rdb_preamble
+    char sig[5] = {0};
+    aof_file.read(sig, 5);
+    assert(aof_file.good());
+
+    if (!std::strncmp(sig, "REDIS", 5)) {
+        FATAL("aof_use_rdb_preamble not supported!!!");
+    } else {
+        // 不是AOF混合版则seek到开头.
+        aof_file.seekg(0, std::ios_base::beg);
+    }
 
     // Parse loop
     while (aof_file.good())
-    {
         std::cout << ParseOneMsg(aof_file) << std::endl;
-    }
 
     return 0;
 }
